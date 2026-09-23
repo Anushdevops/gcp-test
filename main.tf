@@ -8,27 +8,27 @@ terraform {
 }
 
 provider "google" {
-  project = "project-115187a2-6636-4140-8bb"
-  region  = "us-central1"
+  project = var.project_id
+  region  = var.region
 }
 
 # Create VPC network
 resource "google_compute_network" "vpc_network" {
-  name                    = "jenkins-vpc"
+  name                    = "${var.prefix}-vpc"
   auto_create_subnetworks = false
 }
 
 # Create subnet
 resource "google_compute_subnetwork" "vpc_subnet" {
-  name          = "jenkins-subnet"
+  name          = "${var.prefix}-subnet"
   ip_cidr_range = "10.0.0.0/24"
-  region        = "us-central1"
+  region        = var.region
   network       = google_compute_network.vpc_network.id
 }
 
-# Create firewall rule for SSH (port 22) and Jenkins (port 8080)
+# Create firewall rule to allow SSH and Jenkins access
 resource "google_compute_firewall" "allow_ssh_jenkins" {
-  name    = "jenkins-allow-ssh-jenkins"
+  name    = "${var.prefix}-allow-ssh-jenkins"
   network = google_compute_network.vpc_network.name
 
   allow {
@@ -37,46 +37,68 @@ resource "google_compute_firewall" "allow_ssh_jenkins" {
   }
 
   source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["jenkins"]
+  target_tags   = [var.prefix]
 }
 
 # Create VM instance
 resource "google_compute_instance" "jenkins_vm" {
-  name         = "jenkins-jenkins-vm"
-  machine_type = "e2-medium"
-  zone         = "us-central1-a"
-
-  tags = [var.prefix]
+  name         = "${var.prefix}-jenkins-vm"
+  machine_type = var.machine_type
+  zone         = var.zone
+  tags         = [var.prefix]
 
   boot_disk {
     initialize_params {
-      image = "projects/632428227806/global/images/family/ubuntu-2004-lts"
+      image = "projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts"
     }
   }
 
-  network_interface {
-    subnetwork = google_compute_subnetwork.vpc_subnet.id
-    access_config {
-      # Ephemeral public IP
-    }
-  }
-
+  # Startup script to install Jenkins
   metadata_startup_script = <<-EOF
     #!/bin/bash
+    set -e
+
+    # Update package list
     apt-get update
-    apt-get install -y openjdk-11-jre
-    curl -fsSL https://pkg.jenkins.io/debian/jenkins.io.key | sudo tee \
+
+    # Install OpenJDK 11 (required for Jenkins)
+    apt-get install -y openjdk-11-jre-headless
+
+    # Install Jenkins
+    curl -fsSL https://pkg.jenkins.io/debian/jenkins.io-2023.key | tee \
       /usr/share/keyrings/jenkins-keyring.asc > /dev/null
     echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
-      https://pkg.jenkins.io/debian binary/ | sudo tee \
+      https://pkg.jenkins.io/debian binary/ | tee \
       /etc/apt/sources.list.d/jenkins.list > /dev/null
     apt-get update
     apt-get install -y jenkins
+
+    # Start and enable Jenkins service
+    systemctl daemon-reload
     systemctl start jenkins
     systemctl enable jenkins
+
+    # Wait for Jenkins to be ready
+    echo "Waiting for Jenkins to start..."
+    sleep 30
+
+    # Get initial admin password
+    if [ -f /var/lib/jenkins/secrets/initialAdminPassword ]; then
+      echo "Jenkins initial admin password:"
+      cat /var/lib/jenkins/secrets/initialAdminPassword
+    fi
   EOF
 
   metadata = {
-    ssh-keys = "ubuntu:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA0mwSbB1X039E5kKHEuVfL84EDjnRwfH5ZshDyLUB5O anushgoud40@gmail.com"
+    ssh-keys = "ubuntu:${var.ssh_public_key}"
+  }
+
+  network_interface {
+    network    = google_compute_network.vpc_network.name
+    subnetwork = google_compute_subnetwork.vpc_subnet.name
+
+    access_config {
+      // Ephemeral public IP
+    }
   }
 }

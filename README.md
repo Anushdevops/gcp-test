@@ -1,47 +1,55 @@
 # GCP Jenkins VM Terraform Configuration
 
-This Terraform configuration creates a Google Cloud Platform VM instance with Jenkins installed and accessible via ports 22 (SSH) and 8080 (HTTP).
+This Terraform configuration creates a Google Cloud Platform VM instance with Jenkins installed and configured.
 
-## Prerequisites
+## Resources Created
 
-1. [Terraform](https://www.terraform.io/downloads) installed (v1.0+)
-2. [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) installed and authenticated
-3. A GCP project with billing enabled
-4. SSH key pair (you'll need the content of your public key, typically `~/.ssh/id_rsa.pub`)
+- VPC Network
+- Subnet
+- Firewall Rule (allowing TCP ports 22 and 8080 from 0.0.0.0/0)
+- Compute Engine VM Instance with:
+  - Ubuntu 20.04 LTS boot disk
+  - Startup script that installs OpenJDK 11 and Jenkins
+  - SSH key configuration for access
+  - External IP address for public access
+
+## Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `project_id` | GCP project ID | - |
+| `region` | GCP region | `us-central1` |
+| `zone` | GCP zone | `us-central1-a` |
+| `prefix` | Prefix for resource names | `jenkins` |
+| `machine_type` | Machine type for the VM instance | `e2-medium` |
+| `ssh_public_key` | SSH public key for VM access | - |
 
 ## Usage
 
-1. Copy the example variables file:
-   ```bash
-   cp terraform.tfvars.example terraform.tfvars
-   ```
-
-2. Edit `terraform.tfvars` and update the values:
-   - `project_id`: Your GCP project ID
-   - `region`: GCP region (e.g., us-central1)
-   - `zone`: GCP zone (e.g., us-central1-a)
-   - `prefix`: Optional prefix for resource names (default: jenkins)
-   - `machine_type`: VM machine type (default: e2-medium)
-   - `ssh_public_key`: Content of your SSH public key (e.g., `ssh-rsa AAAAB3NzaC...`)
-
-3. Initialize Terraform:
+1. Initialize Terraform:
    ```bash
    terraform init
    ```
 
-4. Review the planned changes:
+2. Review the configuration:
    ```bash
    terraform plan
    ```
 
-5. Apply the configuration:
+3. Apply the configuration:
    ```bash
    terraform apply
    ```
 
-6. After successful apply, note the outputs:
-   - Jenkins URL: Access Jenkins at `http://<EXTERNAL_IP>:8080`
-   - SSH access: `ssh -i <PRIVATE_KEY> ubuntu@<EXTERNAL_IP>`
+4. After successful deployment, you'll get outputs:
+   - `vm_external_ip`: External IP address of the Jenkins VM
+   - `jenkins_url`: URL to access Jenkins web interface (http://EXTERNAL_IP:8080)
+   - `ssh_command`: SSH command to connect to the VM
+
+5. Access Jenkins:
+   - Open a web browser and navigate to the Jenkins URL
+   - The initial admin password will be displayed in the VM's serial console output or can be retrieved via SSH
+   - Use the SSH command output to connect to the VM if needed
 
 ## Destroying Resources
 
@@ -52,7 +60,7 @@ terraform destroy
 
 ## Notes
 
-- The VM uses Ubuntu 20.04 LTS as the base image
-- Jenkins is installed via the official Debian package repository
-- Firewall rules allow access to ports 22 and 8080 from any source (0.0.0.0/0)
-- For production use, consider restricting the source IP ranges in the firewall rule
+- The VM will take a few minutes to fully install Jenkins after startup
+- Jenkins will be accessible on port 8080 of the VM's external IP
+- SSH access is configured using the provided SSH public key
+- All resources are tagged with the prefix for easy identification
