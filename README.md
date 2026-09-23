@@ -7,7 +7,7 @@ This Terraform configuration creates a Google Cloud Platform VM instance with Je
 1. [Terraform](https://www.terraform.io/downloads) installed (v1.0+)
 2. [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) installed and authenticated
 3. A GCP project with billing enabled
-4. SSH key pair (default uses `~/.ssh/id_rsa.pub`)
+4. SSH key pair (you'll need the content of your public key, typically `~/.ssh/id_rsa.pub`)
 
 ## Usage
 
@@ -22,7 +22,7 @@ This Terraform configuration creates a Google Cloud Platform VM instance with Je
    - `zone`: GCP zone (e.g., us-central1-a)
    - `prefix`: Optional prefix for resource names (default: jenkins)
    - `machine_type`: VM machine type (default: e2-medium)
-   - `public_key_path`: Path to your public SSH key
+   - `ssh_public_key`: Content of your SSH public key (e.g., `ssh-rsa AAAAB3NzaC...`)
 
 3. Initialize Terraform:
    ```bash

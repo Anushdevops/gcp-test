@@ -77,6 +77,6 @@ resource "google_compute_instance" "jenkins_vm" {
   EOF
 
   metadata = {
-    ssh-keys = "ubuntu:${file(var.public_key_path)}"
+    ssh-keys = "ubuntu:${var.ssh_public_key}"
   }
 }

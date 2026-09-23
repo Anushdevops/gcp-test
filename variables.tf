@@ -24,8 +24,13 @@ variable "machine_type" {
   default     = "e2-medium"
 }
 
+variable "ssh_public_key" {
+  description = "SSH public key for VM access (content of ~/.ssh/id_rsa.pub)"
+  type        = string
+}
+
 variable "public_key_path" {
-  description = "Path to the public SSH key for VM access"
+  description = "Path to the public SSH key for VM access (deprecated, use ssh_public_key instead)"
   type        = string
   default     = "~/.ssh/id_rsa.pub"
 }

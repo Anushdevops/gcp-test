@@ -6,4 +6,6 @@ region        = "us-central1"
 zone          = "us-central1-a"
 prefix        = "jenkins"
 machine_type  = "e2-medium"
-public_key_path = "~/.ssh/id_rsa.pub"
+ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... (your actual SSH public key content)"
+# public_key_path is deprecated - use ssh_public_key instead
+# public_key_path = "~/.ssh/id_rsa.pub"
