@@ -1,11 +1,17 @@
 # Example values for terraform.tfvars
 # Copy this file to terraform.tfvars and update the values
+#
+# IMPORTANT: Avoid hidden characters like tabs or extra spaces:
+# - Type values manually OR use heredoc: cat > terraform.tfvars << 'EOF' ... EOF
+# - No extra whitespace around =
+# - Use straight double quotes: "value"
+# - No trailing spaces after values
 
-project_id    = "your-gcp-project-id"
-region        = "us-central1"
-zone          = "us-central1-a"
-prefix        = "jenkins"
-machine_type  = "e2-medium"
+project_id   = "your-gcp-project-id"
+region       = "us-central1"
+zone         = "us-central1-a"
+prefix       = "jenkins"
+machine_type = "e2-medium"
 ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... (your actual SSH public key content)"
 # public_key_path is deprecated - use ssh_public_key instead
 # public_key_path = "~/.ssh/id_rsa.pub"
