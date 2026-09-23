@@ -50,7 +50,7 @@ resource "google_compute_instance" "jenkins_vm" {
 
   boot_disk {
     initialize_params {
-      image = "projects/ubuntu-os-cloud/global/images/family/ubuntu-1804-lts"
+      image = "projects/debian-cloud/global/images/family/debian-10"
     }
   }
 
