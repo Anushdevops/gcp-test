@@ -8,27 +8,27 @@ terraform {
 }
 
 provider "google" {
-  project = var.project_id
-  region  = var.region
+  project = "project-115187a2-6636-4140-8bb"
+  region  = "us-central1"
 }
 
 # Create VPC network
 resource "google_compute_network" "vpc_network" {
-  name                    = "${var.prefix}-vpc"
+  name                    = "jenkins-vpc"
   auto_create_subnetworks = false
 }
 
 # Create subnet
 resource "google_compute_subnetwork" "vpc_subnet" {
-  name          = "${var.prefix}-subnet"
+  name          = "jenkins-subnet"
   ip_cidr_range = "10.0.0.0/24"
-  region        = var.region
+  region        = "us-central1"
   network       = google_compute_network.vpc_network.id
 }
 
 # Create firewall rule for SSH (port 22) and Jenkins (port 8080)
 resource "google_compute_firewall" "allow_ssh_jenkins" {
-  name    = "${var.prefix}-allow-ssh-jenkins"
+  name    = "jenkins-allow-ssh-jenkins"
   network = google_compute_network.vpc_network.name
 
   allow {
@@ -37,20 +37,20 @@ resource "google_compute_firewall" "allow_ssh_jenkins" {
   }
 
   source_ranges = ["0.0.0.0/0"]
-  target_tags   = [var.prefix]
+  target_tags   = ["jenkins"]
 }
 
 # Create VM instance
 resource "google_compute_instance" "jenkins_vm" {
-  name         = "${var.prefix}-jenkins-vm"
-  machine_type = var.machine_type
-  zone         = var.zone
+  name         = "jenkins-jenkins-vm"
+  machine_type = "e2-medium"
+  zone         = "us-central1-a"
 
   tags = [var.prefix]
 
   boot_disk {
     initialize_params {
-      image = "projects/debian-cloud/global/images/family/debian-10"
+      image = "projects/632428227806/global/images/family/ubuntu-2004-lts"
     }
   }
 
@@ -77,6 +77,6 @@ resource "google_compute_instance" "jenkins_vm" {
   EOF
 
   metadata = {
-    ssh-keys = "ubuntu:${var.ssh_public_key}"
+    ssh-keys = "ubuntu:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA0mwSbB1X039E5kKHEuVfL84EDjnRwfH5ZshDyLUB5O anushgoud40@gmail.com"
   }
 }
