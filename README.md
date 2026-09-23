@@ -6,18 +6,20 @@ This Terraform configuration creates Google Cloud Platform VM instances for:
 
 ## Resources Created
 
+### Shared Resources:
+- VPC Network
+- Subnet
+
 ### Jenkins VM:
-- VPC Network and Subnet
-- Firewall Rule (allowing TCP ports 22, 8080 from 0.0.0.0/0)
+- Firewall Rule (allowing TCP ports 22, 8080 from 0.0.0.0/0, tagged with jenkins)
 - Compute Engine VM Instance with:
-  - Debian GNU/Linux 11 boot disk (10 GB, balanced persistent disk)
+  - Debian GNU/Linux 13 boot disk (10 GB, balanced persistent disk)
   - Startup script that installs OpenJDK 11 and Jenkins
   - SSH key configuration for access
   - External IP address for public access
 
 ### Uptime-Kuma VM:
-- Uses the same VPC Network and Subnet
-- Additional Firewall Rule (allowing TCP ports 22, 80, 443, 3001 from 0.0.0.0/0)
+- Firewall Rule (allowing TCP ports 22, 80, 443, 3001 from 0.0.0.0/0, tagged with uptime-kuma)
 - Compute Engine VM Instance with:
   - Debian GNU/Linux 11 boot disk (10 GB, balanced persistent disk)
   - Startup script that installs Docker and deploys Uptime-Kuma via Docker Compose
@@ -93,5 +95,5 @@ terraform destroy
 - Jenkins will be accessible on port 8080
 - Uptime-Kuma will be accessible on port 3001
 - SSH access is configured using the provided SSH public key
-- All resources are tagged with the prefix for easy identification
-- Uses Debian GNU/Linux 11 with 10 GB balanced persistent disks for both VMs
+- All resources are tagged appropriately (jenkins or uptime-kuma) for easy identification
+- Uses Debian GNU/Linux with 10 GB balanced persistent disks for both VMs
