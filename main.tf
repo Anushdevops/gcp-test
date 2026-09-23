@@ -42,14 +42,16 @@ resource "google_compute_firewall" "allow_ssh_jenkins" {
 
 # Create VM instance
 resource "google_compute_instance" "jenkins_vm" {
-  name         = "${var.prefix}-jenkins-vm"
+  name         = "instance-20260923-205850"
   machine_type = var.machine_type
   zone         = var.zone
   tags         = [var.prefix]
 
   boot_disk {
     initialize_params {
-      image = "projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts"
+      image = "projects/debian-cloud/global/images/family/debian-13"
+      size  = 10
+      type  = "pd-balanced"
     }
   }
 

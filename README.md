@@ -8,7 +8,7 @@ This Terraform configuration creates a Google Cloud Platform VM instance with Je
 - Subnet
 - Firewall Rule (allowing TCP ports 22 and 8080 from 0.0.0.0/0)
 - Compute Engine VM Instance with:
-  - Ubuntu 20.04 LTS boot disk
+  - Debian GNU/Linux 13 (trixie) boot disk (10 GB, balanced persistent disk)
   - Startup script that installs OpenJDK 11 and Jenkins
   - SSH key configuration for access
   - External IP address for public access
@@ -64,3 +64,4 @@ terraform destroy
 - Jenkins will be accessible on port 8080 of the VM's external IP
 - SSH access is configured using the provided SSH public key
 - All resources are tagged with the prefix for easy identification
+- Uses Debian GNU/Linux 13 (trixie) with 10 GB balanced persistent disk
