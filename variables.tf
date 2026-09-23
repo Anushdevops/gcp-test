@@ -5,11 +5,20 @@ variable "project_id" {
 
 variable "region" {
   description = "GCP region"
+  type        = string
+  validation {
+    condition     = length(var.region) > 0
+    error_message = "Region must be specified."
+  }
 }
 
 variable "zone" {
   description = "GCP zone (e.g., us-central1-a)"
   type        = string
+  validation {
+    condition     = length(var.zone) > 0
+    error_message = "Zone must be specified."
+  }
 }
 
 variable "prefix" {
