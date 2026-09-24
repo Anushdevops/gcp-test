@@ -1,41 +1,117 @@
 pipeline {
   agent any
-  tools { jdk 'jdk17'; nodejs 'node18' }
-  environment { SCANNER_HOME = tool 'sonar-scanner' }
+
+  tools {
+    jdk 'jdk17'
+    nodejs 'node18'
+  }
+
+  environment {
+    SCANNER_HOME = tool 'sonar-scanner'
+  }
+
   stages {
-    stage('Checkout') { steps { checkout scm } }
-    stage('Install Dependencies') { steps { sh 'npm install' } }
-    stage('SonarQube') {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Install Dependencies') {
+      steps {
+        sh 'npm install'
+      }
+    }
+
+    stage('SonarQube Analysis') {
       steps {
         withSonarQubeEnv('sonar-server') {
-          sh '$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=uptime-kuma -Dsonar.projectKey=uptime-kuma'
+          sh '''
+            "$SCANNER_HOME/bin/sonar-scanner" \
+              -Dsonar.projectName=uptime-kuma \
+              -Dsonar.projectKey=uptime-kuma
+          '''
         }
       }
     }
+
     stage('Quality Gate') {
-      steps { script { timeout(time: 10, unit: 'MINUTES') { waitForQualityGate abortPipeline: true, credentialsId: 'Sonar-token' } } }
-    }
-    stage('OWASP') {
       steps {
-        dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+        script {
+          timeout(time: 10, unit: 'MINUTES') {
+            waitForQualityGate abortPipeline: true,
+              credentialsId: 'Sonar-token'
+          }
+        }
+      }
+    }
+
+    stage('OWASP Dependency Check') {
+      steps {
+        dependencyCheck(
+          additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit',
+          odcInstallation: 'DP-Check'
+        )
         dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
       }
     }
-    stage('Trivy FS') {
-      steps { sh 'trivy fs --format table --output trivyfs.txt .'; archiveArtifacts artifacts: 'trivyfs.txt', allowEmptyArchive: true }
+
+    stage('Trivy FS Scan') {
+      steps {
+        sh 'trivy fs --format table --output trivyfs.txt .'
+        archiveArtifacts artifacts: 'trivyfs.txt',
+          allowEmptyArchive: true
+      }
     }
-    stage('Docker Build') { steps { sh 'docker build -t uptime-kuma:${BUILD_NUMBER} .' } }
-    stage('Trivy Image') { steps { sh 'trivy image --exit-code 1 --severity HIGH,CRITICAL uptime-kuma:${BUILD_NUMBER}' } }
+
+    stage('Docker Build') {
+      steps {
+        sh 'docker build -t uptime-kuma:${BUILD_NUMBER} .'
+      }
+    }
+
+    stage('Trivy Image Scan') {
+      steps {
+        sh 'trivy image --exit-code 1 --severity HIGH,CRITICAL uptime-kuma:${BUILD_NUMBER}'
+      }
+    }
+
     stage('Docker Push') {
-      when { expression { return env.DOCKERHUB_PUSH == 'true' } }
+      when {
+        expression {
+          return env.DOCKERHUB_PUSH == 'true'
+        }
+      }
+
       steps {
         withDockerRegistry(credentialsId: 'docker') {
-          sh 'docker tag uptime-kuma:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest && docker push ${DOCKER_IMAGE}:latest'
+          sh '''
+            docker tag uptime-kuma:${BUILD_NUMBER} ${DOCKER_IMAGE}:${BUILD_NUMBER}
+            docker tag uptime-kuma:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
+            docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+            docker push ${DOCKER_IMAGE}:latest
+          '''
         }
       }
     }
+
     stage('Deploy') {
-      steps { sh 'docker rm -f uptime-app || true; docker run -d --name uptime-app --restart unless-stopped -p 3001:3001 uptime-kuma:${BUILD_NUMBER}' }
+      steps {
+        sh '''
+          docker rm -f uptime-app || true
+          docker run -d \
+            --name uptime-app \
+            --restart unless-stopped \
+            -p 3001:3001 \
+            uptime-kuma:${BUILD_NUMBER}
+        '''
+      }
+    }
+  }
+
+  post {
+    always {
+      sh 'docker image prune -f || true'
     }
   }
 }

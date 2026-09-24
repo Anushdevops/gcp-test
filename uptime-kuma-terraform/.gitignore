@@ -1,8 +1,0 @@
-.terraform/
-*.tfstate
-*.tfstate.*
-terraform.tfvars
-*.pem
-*.key
-crash.log
-.DS_Store
